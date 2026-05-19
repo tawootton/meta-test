@@ -9,113 +9,62 @@
 <html lang="en">\
 <head>\
     <meta charset="UTF-8">\
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\
-    <title>Meta Glasses Web Sandbox</title>\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <title>Meta Band Validation Grid</title>\
     <style>\
-        /* DESIGN RULES FOR META RAY-BAN DISPLAY GLASSES:\
-           1. Viewport is a strict 600x600 pixel canvas.\
-           2. Background MUST be true black (#000000). On an additive see-through display,\
-              black renders as completely transparent, letting you see the real world.\
-        */\
+        /* Strict 600x600 viewport with true black transparent background */\
         * \{ box-sizing: border-box; margin: 0; padding: 0; \}\
         body \{ \
             width: 600px; \
             height: 600px; \
             background-color: #000000; \
-            color: #ffffff; \
-            font-family: -apple-system, sans-serif; \
             display: flex; \
-            flex-direction: column; \
+            flex-direction: column;\
             align-items: center; \
             justify-content: center; \
             overflow: hidden; \
-            padding: 40px;\
-        \}\
-        \
-        h2 \{ font-size: 28px; margin-bottom: 10px; color: #0084ff; text-align: center; \}\
-        p \{ font-size: 18px; margin-bottom: 40px; color: #aaaaaa; text-align: center; \}\
-\
-        /* Interactive components require explicit .focusable styling for D-pad/Band highlighting */\
-        .focusable \{ \
-            background: #222222; \
-            color: white; \
-            border: 2px solid #444444; \
-            padding: 20px 40px; \
-            font-size: 22px; \
-            font-weight: bold; \
-            border-radius: 14px; \
-            cursor: pointer; \
-            transition: all 0.2s ease;\
-            outline: none;\
-            width: 100%;\
-            max-width: 360px;\
-            text-align: center;\
         \}\
 \
-        /* The glasses container automatically drives focus attributes via standard keyboard focus navigation */\
-        .focusable:focus, .focusable.focused \{ \
-            background: #0084ff; \
-            border-color: #ffffff; \
-            transform: scale(1.05); \
-            box-shadow: 0 0 15px rgba(0, 132, 255, 0.6);\
+        /* A clean, horizontal row containing 3 equal boxes */\
+        .grid-container \{\
+            display: flex;\
+            gap: 20px;\
         \}\
 \
-        #action-log \{ \
-            margin-top: 40px; \
-            font-family: monospace; \
-            font-size: 16px; \
-            color: #00ff00; \
-            min-height: 30px; \
-            text-align: center;\
+        /* Default state: Quiet, dark gray boxes */\
+        .box \{\
+            width: 120px;\
+            height: 120px;\
+            background-color: #222222;\
+            border: 3px solid #444444;\
+            border-radius: 16px;\
+            transition: all 0.15s ease;\
+            outline: none; /* Clear standard browser blue outlines */\
+            cursor: pointer;\
+        \}\
+\
+        /* Active/Focused state: Turn bright green when the Neural Band selects it */\
+        .box:focus \{\
+            background-color: #00ff00;\
+            border-color: #ffffff;\
+            transform: scale(1.1);\
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);\
         \}\
     </style>\
 </head>\
 <body>\
 \
-    <h2>Meta Glasses Web Channel</h2>\
-    <p>Framework Build: Native Web App</p>\
-\
-    <button class="focusable" id="btn-trigger" autofocus>Trigger Action Link</button>\
-\
-    <div id="action-log">Status: Awaiting input selection...</div>\
+    <div class="grid-container">\
+        <button class="box" id="box1" autofocus></button>\
+        <button class="box" id="box2"></button>\
+        <button class="box" id="box3"></button>\
+    </div>\
 \
     <script>\
-        const logDisplay = document.getElementById('action-log');\
-        const triggerButton = document.getElementById('btn-trigger');\
-\
-        function executePipelineAction() \{\
-            const timestamp = new Date().toLocaleTimeString();\
-            logDisplay.innerText = `\uc0\u55356 \u57225  Action Fired at $\{timestamp\}!`;\
-            \
-            // Optional physical device vibration or audio feedback can go here\
-            if (window.navigator && window.navigator.vibrate) \{\
-                window.navigator.vibrate(100);\
-            \}\
-        \}\
-\
-        // Handle direct touch inputs from your Samsung Fold 7 screen\
-        triggerButton.addEventListener('click', (e) => \{\
-            e.preventDefault();\
-            executePipelineAction();\
+        // Force the first box to capture structural focus immediately on launch\
+        window.addEventListener('load', () => \{\
+            document.getElementById('box1').focus();\
         \});\
-\
-        /* EMG WRISTBAND INTERRUPT MAPPING:\
-           The Meta Neural Band translates physical hand/wrist gestures directly into standard \
-           keyboard event listeners (ArrowUp, ArrowDown, Enter).\
-        */\
-        window.addEventListener('keydown', (e) => \{\
-            logDisplay.innerText = `Key detected: $\{e.key\}`;\
-            \
-            if (e.key === 'Enter' || e.key === ' ') \{\
-                // Ensure the currently focused element is what fires\
-                if (document.activeElement === triggerButton) \{\
-                    executePipelineAction();\
-                \}\
-            \}\
-        \});\
-\
-        // Ensure the element retains initial focus loop states\
-        triggerButton.focus();\
     </script>\
 </body>\
 </html>}
