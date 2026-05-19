@@ -1,70 +1,63 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2822
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Band Validation Grid</title>
+    <style>
+        /* Strict 600x600 viewport with true black transparent background */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            width: 600px; 
+            height: 600px; 
+            background-color: #000000; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
 
-\f0\fs24 \cf0 <!DOCTYPE html>\
-<html lang="en">\
-<head>\
-    <meta charset="UTF-8">\
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
-    <title>Meta Band Validation Grid</title>\
-    <style>\
-        /* Strict 600x600 viewport with true black transparent background */\
-        * \{ box-sizing: border-box; margin: 0; padding: 0; \}\
-        body \{ \
-            width: 600px; \
-            height: 600px; \
-            background-color: #000000; \
-            display: flex; \
-            flex-direction: column;\
-            align-items: center; \
-            justify-content: center; \
-            overflow: hidden; \
-        \}\
-\
-        /* A clean, horizontal row containing 3 equal boxes */\
-        .grid-container \{\
-            display: flex;\
-            gap: 20px;\
-        \}\
-\
-        /* Default state: Quiet, dark gray boxes */\
-        .box \{\
-            width: 120px;\
-            height: 120px;\
-            background-color: #222222;\
-            border: 3px solid #444444;\
-            border-radius: 16px;\
-            transition: all 0.15s ease;\
-            outline: none; /* Clear standard browser blue outlines */\
-            cursor: pointer;\
-        \}\
-\
-        /* Active/Focused state: Turn bright green when the Neural Band selects it */\
-        .box:focus \{\
-            background-color: #00ff00;\
-            border-color: #ffffff;\
-            transform: scale(1.1);\
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);\
-        \}\
-    </style>\
-</head>\
-<body>\
-\
-    <div class="grid-container">\
-        <button class="box" id="box1" autofocus></button>\
-        <button class="box" id="box2"></button>\
-        <button class="box" id="box3"></button>\
-    </div>\
-\
-    <script>\
-        // Force the first box to capture structural focus immediately on launch\
-        window.addEventListener('load', () => \{\
-            document.getElementById('box1').focus();\
-        \});\
-    </script>\
-</body>\
-</html>}
+        /* A clean, horizontal row containing 3 equal boxes */
+        .grid-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Default state: Quiet, dark gray boxes */
+        .box {
+            width: 120px;
+            height: 120px;
+            background-color: #222222;
+            border: 3px solid #444444;
+            border-radius: 16px;
+            transition: all 0.15s ease;
+            outline: none; /* Clear standard browser blue outlines */
+            cursor: pointer;
+        }
+
+        /* Active/Focused state: Turn bright green when the Neural Band selects it */
+        .box:focus {
+            background-color: #00ff00;
+            border-color: #ffffff;
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-container">
+        <button class="box" id="box1" autofocus></button>
+        <button class="box" id="box2"></button>
+        <button class="box" id="box3"></button>
+    </div>
+
+    <script>
+        // Force the first box to capture structural focus immediately on launch
+        window.addEventListener('load', () => {
+            document.getElementById('box1').focus();
+        });
+    </script>
+</body>
+</html>
