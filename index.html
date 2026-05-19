@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Display Web Sandbox</title>
+    <style>
+        body { font-family: sans-serif; padding: 30px; text-align: center; background: #f0f2f5; }
+        button { background: #0084ff; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; width: 100%; max-width: 320px; margin: 10px 0; }
+        button:active { background: #0066cc; }
+        #console { background: #222; color: #00ff00; padding: 20px; border-radius: 6px; text-align: left; font-family: monospace; font-size: 14px; margin-top: 20px; min-height: 15px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <h2>Meta Glasses Web Channel Test</h2>
+    <p>Testing the container-injected JavaScript pipeline</p>
+    <button id="btn-connect">Connect to Display Pipeline</button>
+    <div id="console">Status: Waiting for container initialization...</div>
+    <script>
+        const logBox = document.getElementById('console');
+        window.addEventListener('load', () => {
+            if (typeof window.metaWearable !== 'undefined') {
+                logBox.innerText = "Status: API Bridge Injected! Ready to handshake.";
+            } else {
+                logBox.innerText = "Status: ❌ Critical Error. Open this page inside the official Meta View Web Apps portal.";
+            }
+        });
+        document.getElementById('btn-connect').addEventListener('click', async () => {
+            if (typeof window.metaWearable === 'undefined') return;
+            logBox.innerHTML += "<br/>> Requesting container session...";
+            try {
+                const session = await window.metaWearable.createSession();
+                logBox.innerHTML += "<br/>> 🎉 WEB HANDSHAKE SUCCESSFUL!";
+                await session.display.sendContent({
+                    template: "flexBox",
+                    direction: "column",
+                    children: [{ type: "text", value: "Web Pipeline Active!" }]
+                });
+                logBox.innerHTML += "<br/>> Layout dispatched to lenses!";
+            } catch (err) {
+                logBox.innerHTML += "<br/>> ❌ Blocked: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
