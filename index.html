@@ -26,19 +26,16 @@
     }
 
     :root {
-      /* ✅ "Keyed" background: pure black (your glasses treat this as transparent) */
+      /* ✅ Key black background (your glasses treat black as transparent) */
       --key-black: #000;
 
-      /* ============================
-         Smoked Liquid Glass tile (NOT pure black)
-         ============================ */
-      --tile-bg: rgba(14, 18, 26, 0.32);            /* smoked tint, visible in "space" */
-      --tile-border: rgba(255,255,255,0.18);
+      /* ✅ Frosted glass material (more milky/white-grey) */
+      --tile-bg: rgba(180, 190, 205, 0.16);
+      --tile-border: rgba(255,255,255,0.26);
       --tile-shadow: rgba(0,0,0,0.55);
 
-      /* Subtle outer glow (kept gentle) */
-      --glowA: rgba(120,170,255,0.14);
-      --glowB: rgba(80,255,170,0.08);
+      /* subtle white/grey halo (not green) */
+      --halo: rgba(255,255,255,0.10);
 
       /* Text for glass (white) */
       --text: rgba(255,255,255,0.95);
@@ -48,7 +45,6 @@
       --warn: #f3c316;   /* yellow */
       --ok: #22c55e;     /* green */
       --nav: #2f7cff;    /* blue */
-      --select: #25e36a; /* selection green */
 
       /* ===== Tile sizing ===== */
       --tile-size: 440px;
@@ -65,11 +61,11 @@
     html, body {
       height: 100%;
       margin: 0;
-      background: var(--key-black) !important; /* ✅ key out background */
+      background: var(--key-black) !important;
     }
 
     body{
-      background: var(--key-black) !important; /* ✅ key out background */
+      background: var(--key-black) !important;
       display:grid;
       place-items:center;
       font-family: "Formula1 Display", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -77,17 +73,17 @@
       overflow:hidden;
     }
 
-    /* Hard 600×600 canvas — now invisible (key black) */
+    /* Hard 600×600 canvas */
     .canvas{
       width:600px;
       height:600px;
       border-radius:0;
       overflow:hidden;
-      box-shadow: none;                           /* ✅ remove “display frame” */
+      box-shadow: none;
       display:grid;
       place-items:center;
       position:relative;
-      background: var(--key-black) !important;    /* ✅ key black */
+      background: var(--key-black) !important;
     }
 
     /* Slide container */
@@ -98,7 +94,7 @@
       place-items:center;
       opacity:0;
       pointer-events:none;
-      transition: opacity 160ms ease;
+      transition: opacity 220ms ease;
     }
     .slide.active{
       opacity:1;
@@ -106,7 +102,44 @@
     }
 
     /* ============================
-       Liquid Glass Tile (cards only)
+       Splash screen
+       ============================ */
+    .splashWrap{
+      width:100%;
+      height:100%;
+      display:grid;
+      place-items:center;
+    }
+
+    .splashLogo{
+      width: 380px;      /* tweak to taste */
+      max-width: 86%;
+      height: auto;
+
+      opacity: 0;
+      transform: scale(0.92);
+      animation: splashIn 900ms cubic-bezier(.2,.9,.2,1) forwards;
+
+      /* subtle "floating in space" glow */
+      filter:
+        drop-shadow(0 0 20px rgba(255,255,255,0.10))
+        drop-shadow(0 0 36px rgba(120,170,255,0.10));
+      will-change: opacity, transform, filter;
+    }
+
+    @keyframes splashIn{
+      to{ opacity: 1; transform: scale(1); }
+    }
+
+    /* Apple-like fade out (opacity + slight shrink) */
+    .splashLogo.fadeOut{
+      opacity: 0;
+      transform: scale(0.96);
+      transition: opacity 320ms ease, transform 320ms ease;
+    }
+
+    /* ============================
+       Frosted Liquid Glass Tile
        ============================ */
     .tile{
       width: var(--tile-size);
@@ -115,20 +148,18 @@
       position:relative;
       overflow:hidden;
 
-      background: rgba(180, 190, 205, 0.16);
+      background: var(--tile-bg);
       border: 1px solid var(--tile-border);
 
-      /* Frosting (still works; on black background it’s subtle but OK) */
+      /* Frosting */
       backdrop-filter: blur(18px) saturate(1.35) contrast(1.08);
       -webkit-backdrop-filter: blur(18px) saturate(1.35) contrast(1.08);
 
-
       box-shadow:
         0 18px 55px var(--tile-shadow),
-        0 0 20px var(--glowA),
-        0 0 34px var(--glowB),
-        inset 0 1px 0 rgba(255,255,255,0.18),
-        inset 0 -1px 0 rgba(0,0,0,0.32);
+        0 0 24px var(--halo),
+        inset 0 1px 0 rgba(255,255,255,0.20),
+        inset 0 -1px 0 rgba(0,0,0,0.35);
 
       display:grid;
       place-items:center;
@@ -139,7 +170,6 @@
       transform: translateZ(0);
     }
 
-    /* Gloss highlight (top-left sheen) */
     /* Multi-sheen highlights (not just top-left) */
     .tile::before{
       content:"";
@@ -147,36 +177,36 @@
       inset:-60px;
       pointer-events:none;
       z-index:0;
-    
+
       background:
         /* big overhead haze */
         radial-gradient(900px 520px at 50% 0%,
           rgba(255,255,255,0.18),
           rgba(255,255,255,0.06) 42%,
           rgba(255,255,255,0.00) 70%),
-    
+
         /* primary top-left sheen */
         radial-gradient(620px 360px at 22% 16%,
           rgba(255,255,255,0.26),
           rgba(255,255,255,0.08) 38%,
           rgba(255,255,255,0.00) 62%),
-    
+
         /* secondary top-right catch light */
         radial-gradient(520px 320px at 82% 18%,
           rgba(255,255,255,0.14),
           rgba(255,255,255,0.05) 40%,
           rgba(255,255,255,0.00) 65%),
-    
+
         /* bottom bounce (subtle) */
         radial-gradient(700px 420px at 50% 110%,
           rgba(255,255,255,0.10),
           rgba(255,255,255,0.03) 45%,
           rgba(255,255,255,0.00) 70%);
-    
+
       opacity: 0.95;
       transform: rotate(-8deg);
     }
-    
+
     /* Frost grain + edge mist */
     .tile::after{
       content:"";
@@ -185,14 +215,14 @@
       border-radius: 26px;
       pointer-events:none;
       z-index:0;
-    
+
       background:
-        /* edge mist (adds frosted rim feel) */
+        /* edge mist (frosted rim feel) */
         radial-gradient(120% 120% at 50% 50%,
           rgba(255,255,255,0.10) 0%,
           rgba(255,255,255,0.04) 55%,
           rgba(255,255,255,0.00) 72%),
-    
+
         /* subtle grain */
         repeating-linear-gradient(
           0deg,
@@ -201,31 +231,28 @@
           rgba(255,255,255,0.00) 2px,
           rgba(255,255,255,0.00) 4px
         );
-    
-      opacity: 0.18;              /* stronger “frost” */
+
+      opacity: 0.18;
       mix-blend-mode: overlay;
     }
-
 
     /* Ensure content sits above glass layers */
     .tile > * { position: relative; z-index: 1; }
 
-   
-    /* Selected (STATIC) — neutral frosted edge, no green */
+    /* Selected (STATIC) — neutral frosted edge (no green) */
     .tile.is-selected{
-      border-color: rgba(255,255,255,0.28);
+      border-color: rgba(255,255,255,0.30);
       box-shadow:
         0 18px 55px var(--tile-shadow),
-        0 0 0 2px rgba(255,255,255,0.12),   /* subtle outer rim */
-        0 0 22px rgba(255,255,255,0.10),    /* soft halo (white/grey) */
-        inset 0 1px 0 rgba(255,255,255,0.22),
-        inset 0 -1px 0 rgba(0,0,0,0.32);
+        0 0 0 2px rgba(255,255,255,0.12),
+        0 0 24px rgba(255,255,255,0.10),
+        inset 0 1px 0 rgba(255,255,255,0.20),
+        inset 0 -1px 0 rgba(0,0,0,0.35);
       animation: none;
       transform: none;
     }
 
-
-    /* Click feedback */
+    /* Click feedback (overrides the frost layer briefly) */
     .tile.is-clicked::after{
       content:"";
       position:absolute;
@@ -242,15 +269,15 @@
       to{opacity:0}
     }
 
-   /* Completion state — still frosted/neutral (no green ring) */
+    /* Completion state — still neutral frosted (no green ring) */
     .tile.is-complete{
-      border-color: rgba(255,255,255,0.26);
+      border-color: rgba(255,255,255,0.28);
       box-shadow:
         0 18px 55px var(--tile-shadow),
         0 0 0 2px rgba(255,255,255,0.10),
         0 0 18px rgba(255,255,255,0.08),
-        inset 0 1px 0 rgba(255,255,255,0.22),
-        inset 0 -1px 0 rgba(0,0,0,0.32);
+        inset 0 1px 0 rgba(255,255,255,0.20),
+        inset 0 -1px 0 rgba(0,0,0,0.35);
     }
 
     /* Content layout (icon-heavy) */
@@ -350,7 +377,6 @@
       transition: stroke 120ms linear, stroke-width 120ms linear;
     }
 
-    /* Tick icon should have no residual shadow */
     .tickIcon { filter: none !important; }
 
     /* Optional HUD hint (hide on glasses if you want) */
@@ -367,11 +393,8 @@
     /* .hudHint{ display:none; } */
 
     /* =========================================================
-       Leclerc tracker layout (BIGGER + CENTERED + LOWERED)
-       - Arrow closer to text
-       - Stable when BATTLE swaps
+       Leclerc tracker layout
        ========================================================= */
-
     .posCard{
       width:100%;
       height:100%;
@@ -445,7 +468,6 @@
       min-height: 42px;
     }
 
-    /* BATTLE: Regular, same size as timing text */
     .gap.battle{
       font-weight: 400;
       font-size: 42px;
@@ -470,7 +492,7 @@
     /* Fallback if backdrop-filter unsupported */
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
       .tile{
-        background: rgba(26, 30, 40, 0.45);
+        background: rgba(180, 190, 205, 0.20);
       }
     }
   </style>
@@ -479,8 +501,15 @@
 <body>
   <div class="canvas">
 
+    <!-- Slide -1: Splash (first screen) -->
+    <div id="slideSplash" class="slide active">
+      <div class="splashWrap">
+        <img id="splashLogo" class="splashLogo" src="./logo.png" alt="Logo" />
+      </div>
+    </div>
+
     <!-- Slide 0: Live Track -->
-    <div id="slideTrack" class="slide active">
+    <div id="slideTrack" class="slide">
       <div id="tileTrack" class="tile is-selected" tabindex="0" role="button" aria-label="Live track tile">
         <div class="content">
           <div class="iconWrap">
@@ -542,7 +571,6 @@
       </div>
     </div>
 
-    <div class="hudHint">← / → navigate • Enter / click activate</div>
   </div>
 
   <script>
@@ -620,28 +648,61 @@
     }
 
     /* =========================================================
-       SLIDES NAVIGATION
+       SLIDES NAVIGATION (includes Splash first)
        ========================================================= */
     const slides = [
-      { id: "slideTrack", tileId: "tileTrack", activate: activateTrack },
-      { id: "slideNav",   tileId: "tileNav",   activate: activateNav },
-      { id: "slideLEC",   tileId: "tileLEC",   activate: activateLEC }
+      { id: "slideSplash", tileId: null, activate: null },
+      { id: "slideTrack",  tileId: "tileTrack", activate: activateTrack },
+      { id: "slideNav",    tileId: "tileNav",   activate: activateNav },
+      { id: "slideLEC",    tileId: "tileLEC",   activate: activateLEC }
     ];
     let slideIndex = 0;
 
+    let splashTimer1 = null;
+    let splashTimer2 = null;
+
     function showSlide(i) {
       slideIndex = (i + slides.length) % slides.length;
+
       slides.forEach((s, idx) => {
         document.getElementById(s.id).classList.toggle("active", idx === slideIndex);
       });
-      document.getElementById(slides[slideIndex].tileId).focus();
+
+      const tileId = slides[slideIndex].tileId;
+      if (tileId) document.getElementById(tileId).focus();
+    }
+
+    function cancelSplashAutoAdvance(){
+      if (splashTimer1) clearTimeout(splashTimer1);
+      if (splashTimer2) clearTimeout(splashTimer2);
+      splashTimer1 = splashTimer2 = null;
     }
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "ArrowRight") showSlide(slideIndex + 1);
-      if (e.key === "ArrowLeft") showSlide(slideIndex - 1);
-      if (e.key === "Enter") slides[slideIndex].activate();
+      if (e.key === "ArrowRight") { cancelSplashAutoAdvance(); showSlide(slideIndex + 1); }
+      if (e.key === "ArrowLeft")  { cancelSplashAutoAdvance(); showSlide(slideIndex - 1); }
+      if (e.key === "Enter") {
+        cancelSplashAutoAdvance();
+        const act = slides[slideIndex].activate;
+        if (act) act();
+      }
     });
+
+    /* =========================================================
+       Splash: auto transition with Apple-like fade
+       ========================================================= */
+    const splashLogo = document.getElementById("splashLogo");
+
+    function startSplashSequence(){
+      // Show splash for a moment, then fade out and transition
+      splashTimer1 = setTimeout(() => {
+        splashLogo.classList.add("fadeOut");
+
+        splashTimer2 = setTimeout(() => {
+          showSlide(1); // go to Live Track
+        }, 320); // match CSS transition timing
+      }, 2400); // how long splash stays before fading
+    }
 
     /* =========================================================
        Slide 0: Live Track
@@ -653,8 +714,8 @@
     const line3Track = document.getElementById("line3Track");
 
     const TRACK_START_MINUTES = 17;
-    const TRACK_DEMO_SECONDS = 12.0;
-    const TRACK_TICK_RATE = 30;
+    const TRACK_DEMO_SECONDS = 12.0;  // ✅ slower countdown (adjust)
+    const TRACK_TICK_RATE = 10;       // ✅ calmer updates (adjust)
     let trackRunning = false;
     let trackComplete = false;
 
@@ -724,7 +785,7 @@
       runTrackCountdown();
     }
 
-    tileTrack.addEventListener("click", activateTrack);
+    tileTrack.addEventListener("click", () => { cancelSplashAutoAdvance(); activateTrack(); });
     tileTrack.addEventListener("focus", () => tileTrack.classList.add("is-selected"));
     tileTrack.addEventListener("blur",  () => tileTrack.classList.remove("is-selected"));
 
@@ -846,7 +907,7 @@
       requestAnimationFrame(navTick);
     }
 
-    tileNav.addEventListener("click", activateNav);
+    tileNav.addEventListener("click", () => { cancelSplashAutoAdvance(); activateNav(); });
     tileNav.addEventListener("focus", () => tileNav.classList.add("is-selected"));
     tileNav.addEventListener("blur",  () => tileNav.classList.remove("is-selected"));
 
@@ -1006,12 +1067,12 @@
       runLECSequence();
     }
 
-    tileLEC.addEventListener("click", activateLEC);
+    tileLEC.addEventListener("click", () => { cancelSplashAutoAdvance(); activateLEC(); });
     tileLEC.addEventListener("focus", () => tileLEC.classList.add("is-selected"));
     tileLEC.addEventListener("blur",  () => tileLEC.classList.remove("is-selected"));
 
     /* =========================================================
-       Helpers + Init
+       Helpers
        ========================================================= */
     function lerp(a, b, t) { return a + (b - a) * t; }
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
@@ -1020,7 +1081,13 @@
       return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
     }
 
-    /* Init */
+    /* =========================================================
+       Init
+       ========================================================= */
+    // Start on splash (index 0)
+    showSlide(0);
+
+    // init other slides content
     iconTrack.innerHTML = warningIconSVG();
     renderTrackStart();
 
@@ -1028,7 +1095,9 @@
     renderNavStart();
 
     renderLECStart();
-    document.getElementById(slides[0].tileId).focus();
+
+    // auto-advance splash -> Live Track with Apple-like fade
+    startSplashSequence();
   </script>
 </body>
 </html>
