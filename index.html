@@ -92,14 +92,19 @@
       inset:0;
       display:grid;
       place-items:center;
+    
       opacity:0;
       pointer-events:none;
-      transition: opacity 220ms ease;
+    
+      /* Apple-ish easing + slightly longer */
+      transition: opacity 360ms cubic-bezier(.2,.9,.2,1);
     }
+    
     .slide.active{
       opacity:1;
       pointer-events:auto;
     }
+
 
     /* ============================
        Splash screen
@@ -660,17 +665,25 @@
 
     let splashTimer1 = null;
     let splashTimer2 = null;
-
+    
     function showSlide(i) {
       slideIndex = (i + slides.length) % slides.length;
-
-      slides.forEach((s, idx) => {
-        document.getElementById(s.id).classList.toggle("active", idx === slideIndex);
+    
+      // 1) Remove active from all slides (they will fade to opacity 0)
+      slides.forEach((s) => {
+        document.getElementById(s.id).classList.remove("active");
       });
-
-      const tileId = slides[slideIndex].tileId;
-      if (tileId) document.getElementById(tileId).focus();
+    
+      // 2) Next frame: add active to target slide (it fades in to opacity 1)
+      requestAnimationFrame(() => {
+        const target = document.getElementById(slides[slideIndex].id);
+        target.classList.add("active");
+    
+        const tileId = slides[slideIndex].tileId;
+        if (tileId) document.getElementById(tileId).focus();
+      });
     }
+
 
     function cancelSplashAutoAdvance(){
       if (splashTimer1) clearTimeout(splashTimer1);
@@ -694,15 +707,18 @@
     const splashLogo = document.getElementById("splashLogo");
 
     function startSplashSequence(){
-      // Show splash for a moment, then fade out and transition
-      splashTimer1 = setTimeout(() => {
-        splashLogo.classList.add("fadeOut");
+  // Show splash for a moment, then fade out and transition
+  splashTimer1 = setTimeout(() => {
+    // Fade the logo itself first (nice polish)
+    splashLogo.classList.add("fadeOut");
 
-        splashTimer2 = setTimeout(() => {
-          showSlide(1); // go to Live Track
-        }, 320); // match CSS transition timing
-      }, 2400); // how long splash stays before fading
-    }
+    // Also fade out the whole splash slide (by switching slides)
+    // Wait a tiny moment so logo fade begins, then switch slides
+    splashTimer2 = setTimeout(() => {
+      showSlide(1); // Live Track
+    }, 180); // small offset feels "Apple-like"
+  }, 1800);
+}
 
     /* =========================================================
        Slide 0: Live Track
