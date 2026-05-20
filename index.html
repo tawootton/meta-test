@@ -1,90 +1,1015 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Band 3x3 Grid</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            width: 600px; 
-            height: 600px; 
-            background-color: #000000; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            overflow: hidden; 
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meta Display – Carousel Tiles</title>
 
-        /* 3x3 grid block mapping out a clean square footprint */
-        .grid-container { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 15px;
-            width: 400px;
-            height: 400px;
-        }
+  <style>
+    /* ============================
+       F1 Fonts (local /fonts)
+       Only Regular (400) + Bold (700)
+       ============================ */
+    @font-face {
+      font-family: "Formula1 Display";
+      src: url("./fonts/Formula1-Display-Regular_web.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Formula1 Display";
+      src: url("./fonts/Formula1-Display-Bold_web.woff2") format("woff2");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
 
-        /* Default State */
-        .box {
-            width: 100%;
-            height: 100%;
-            background-color: #222222;
-            border: 3px solid #444444;
-            border-radius: 12px;
-            transition: all 0.1s ease;
-            outline: none;
-        }
+    :root {
+      --bg: #0b0f16;
 
-        /* 1. Highlight State (Swiping / Hovering) -> Bright Green */
-        .box:focus {
-            background-color: #00ff00;
-            border-color: #ffffff;
-            transform: scale(1.08);
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
-            position: relative;
-            z-index: 10;
-        }
+      /* Liquid Glass tile */
+      --tile-bg: rgba(180, 190, 205, 0.12);          /* subtle grey presence */
+      --tile-border: rgba(255,255,255,0.22);
+      --tile-shadow: rgba(0,0,0,0.42);
 
-        /* 2. Clicked / Confirmed State -> Bright Red */
-        .box:active, .box.clicked-flash {
-            background-color: #ff0000 !important;
-            border-color: #ffffff !important;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8) !important;
-            transform: scale(0.95) !important;
-        }
-    </style>
+      /* Text for glass (white) */
+      --text: rgba(255,255,255,0.95);
+      --muted: rgba(255,255,255,0.72);
+      --muted2: rgba(255,255,255,0.82);
+
+      --warn: #f3c316;   /* yellow */
+      --ok: #22c55e;     /* green */
+      --nav: #2f7cff;    /* blue */
+
+      --select: #25e36a; /* selection green */
+
+      /* ===== Tile sizing ===== */
+      --tile-size: 440px;
+      --icon-size: 150px;
+      --icon-svg: 140px;
+
+      --title-size: 44px;
+      --subtitle-size: 22px;
+      --line3-size: 28px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body{
+      margin:0;
+      background: radial-gradient(900px 600px at 50% 25%, rgba(80,120,255,0.18), transparent 60%),
+                  var(--bg);
+      display:grid;
+      place-items:center;
+      font-family: "Formula1 Display", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+    }
+
+    /* Hard 600×600 canvas */
+    .canvas{
+      width:600px;
+      height:600px;
+      border-radius:26px;
+      overflow:hidden;
+      box-shadow: 0 30px 120px rgba(0,0,0,0.55);
+      display:grid;
+      place-items:center;
+      position:relative;
+
+      /* Give the glass something to blur */
+      background:
+        radial-gradient(900px 700px at 50% 20%, rgba(120,170,255,0.18), transparent 65%),
+        radial-gradient(700px 600px at 30% 80%, rgba(255,255,255,0.06), transparent 60%),
+        radial-gradient(800px 600px at 70% 70%, rgba(80,255,170,0.06), transparent 65%),
+        transparent;
+    }
+
+    /* Slide container */
+    .slide{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 160ms ease;
+    }
+    .slide.active{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    /* ============================
+       Liquid Glass Tile
+       ============================ */
+    .tile{
+      width: var(--tile-size);
+      height: var(--tile-size);
+      border-radius: 26px;
+      position:relative;
+      overflow:hidden;
+
+      background: var(--tile-bg);
+      border: 1px solid var(--tile-border);
+
+      backdrop-filter: blur(18px) saturate(1.35) contrast(1.05);
+      -webkit-backdrop-filter: blur(18px) saturate(1.35) contrast(1.05);
+
+      box-shadow:
+        0 18px 55px var(--tile-shadow),
+        inset 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 0 rgba(0,0,0,0.20);
+
+      display:grid;
+      place-items:center;
+      padding: 26px 22px 20px;
+      user-select:none;
+      outline:none;
+      cursor:pointer;
+      transform: translateZ(0);
+    }
+
+    /* Gloss highlight (top-left sheen) */
+    .tile::before{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      pointer-events:none;
+      background:
+        radial-gradient(600px 320px at 25% 15%,
+          rgba(255,255,255,0.28),
+          rgba(255,255,255,0.06) 35%,
+          rgba(255,255,255,0.00) 60%);
+      transform: rotate(-8deg);
+      opacity: 0.9;
+      z-index: 0;
+    }
+
+    /* Micro-noise / grain */
+    .tile::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: 26px;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.05) 0px,
+          rgba(255,255,255,0.05) 1px,
+          rgba(255,255,255,0.00) 2px,
+          rgba(255,255,255,0.00) 4px
+        );
+      opacity: 0.10;
+      mix-blend-mode: overlay;
+      z-index: 0;
+    }
+
+    /* Ensure content sits above glass layers */
+    .tile > * { position: relative; z-index: 1; }
+
+    /* Selected (STATIC — no pulsing) */
+    .tile.is-selected{
+      border-color: rgba(37,227,106,0.55);
+      box-shadow:
+        0 18px 55px var(--tile-shadow),
+        0 0 0 7px rgba(37,227,106,0.20),
+        inset 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 0 rgba(0,0,0,0.20);
+      animation: none;
+      transform: none;
+    }
+
+    /* Click feedback */
+    .tile.is-clicked::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:26px;
+      background: rgba(255,59,59,0.14);
+      animation: flash 220ms ease-out 1;
+      pointer-events:none;
+      z-index: 2;
+    }
+    @keyframes flash{
+      from{opacity:0}
+      40%{opacity:1}
+      to{opacity:0}
+    }
+
+    /* Completion state */
+    .tile.is-complete{
+      border-color: rgba(34,197,94,0.45);
+      box-shadow:
+        0 18px 55px var(--tile-shadow),
+        0 0 0 7px rgba(34,197,94,0.16),
+        inset 0 1px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 0 rgba(0,0,0,0.20);
+    }
+
+    /* Content layout (icon-heavy) */
+    .content{
+      width:100%;
+      height:100%;
+      display:grid;
+      grid-template-rows: 1fr auto auto auto;
+      align-items:center;
+      justify-items:center;
+      gap: 10px;
+      text-align:center;
+      padding-top: 10px;
+    }
+
+    .iconWrap{
+      width: var(--icon-size);
+      height: var(--icon-size);
+      display:grid;
+      place-items:center;
+      margin-top: 4px;
+    }
+
+    .title{
+      margin:0;
+      font-weight:700;
+      font-size: var(--title-size);
+      color: var(--text);
+      letter-spacing:-0.02em;
+      line-height:1.05;
+    }
+
+    .subtitle{
+      margin:0;
+      font-weight:400;
+      font-size: var(--subtitle-size);
+      color: var(--muted);
+      letter-spacing:-0.01em;
+      line-height:1.15;
+      padding: 0 12px;
+    }
+
+    .line3{
+      margin:0;
+      font-weight:700;
+      font-size: var(--line3-size);
+      color: var(--muted2);
+      letter-spacing:-0.01em;
+      line-height:1.1;
+      min-height: 34px;
+    }
+
+    /* Smooth icon swaps */
+    .iconSwap{
+      transition: opacity 250ms ease, transform 250ms ease, filter 250ms ease;
+      opacity:1;
+      transform: scale(1);
+      will-change: opacity, transform, filter;
+    }
+    .iconSwap.fadeOut{
+      opacity:0;
+      transform: scale(0.92);
+    }
+
+    /* ============================
+       Navigation arrow: "3D" feel
+       - Rotation is around Z (screen plane)
+       - NO blue glow (filter: none)
+       ============================ */
+    .arrowStage{
+      width: 160px;
+      height: 160px;
+      display:grid;
+      place-items:center;
+      perspective: 900px;
+    }
+
+    .arrow3d{
+      --tiltX: 55deg;
+      --rotZ: 0deg;
+      --scale: 1;
+      --strength: 0.35;
+
+      transform:
+        rotateX(var(--tiltX))
+        rotateZ(var(--rotZ))
+        scale(var(--scale));
+      transform-style: preserve-3d;
+
+      filter: none; /* ✅ no glow */
+      will-change: transform;
+    }
+
+    .arrow3d path{
+      stroke: rgba(47,124,255, calc(0.55 + (var(--strength) * 0.45)));
+      stroke-width: calc(9px + (var(--strength) * 4px));
+      transition: stroke 120ms linear, stroke-width 120ms linear;
+    }
+
+    /* Tick icon should have no residual shadow */
+    .tickIcon { filter: none !important; }
+
+    .hudHint{
+      position:absolute;
+      left: 16px;
+      bottom: 14px;
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.01em;
+      user-select:none;
+    }
+
+    /* =========================================================
+       Leclerc tracker layout (BIGGER + CENTERED + LOWERED)
+       - Arrow closer to text
+       - Stable when BATTLE swaps
+       ========================================================= */
+
+    .posCard{
+      width:100%;
+      height:100%;
+      display:grid;
+      grid-template-rows: auto 1fr;
+      justify-items:center;
+      align-items:start;
+
+      padding-top: 22px;   /* lowered slightly */
+      gap: 10px;
+    }
+
+    .posHeader{
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 66px;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.0;
+    }
+
+    .rows{
+      width: 94%;
+      display:grid;
+      grid-template-rows: 1fr 1fr;
+      justify-items: center;
+
+      margin-top: 28px;
+      gap: 36px;
+    }
+
+    /* Fixed 2-column grid keeps arrow locked when text changes */
+    .row{
+      width: 100%;
+      display: grid;
+
+      /* tighter columns => less gap */
+      grid-template-columns: 88px 200px;
+      justify-content: center;
+      align-items: center;
+      column-gap: 2px;
+
+      transition: transform 260ms ease, opacity 260ms ease;
+    }
+
+    .arrowIcon{
+      width: 112px;
+      height: 112px;
+      display:grid;
+      place-items:center;
+
+      justify-self: end;          /* hug text */
+      transform: translateX(6px); /* micro-nudge closer */
+    }
+
+    /* Text block: fixed width (stable) but LEFT-aligned (closer visually) */
+    .nameGap{
+      width: 200px;               /* must match 2nd column */
+      display: grid;
+      justify-items: start;
+      text-align: left;
+      gap: 8px;
+    }
+
+    .drv{
+      font-weight: 700;
+      font-size: 46px;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.0;
+    }
+
+    .gap{
+      font-weight: 400;
+      font-size: 42px;
+      letter-spacing: -0.02em;
+      color: var(--muted2);
+      line-height: 1.0;
+      min-height: 42px; /* stable when swapping to BATTLE */
+    }
+
+    /* BATTLE: Regular, same size as timing text (no extra tracking) */
+    .gap.battle{
+      font-weight: 400;
+      font-size: 42px;
+      letter-spacing: -0.02em;
+      color: var(--muted2);
+      text-transform: none; /* keep exactly as inserted (we insert "BATTLE") */
+    }
+
+    .row.fadeOut{
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    .row.popIn{
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    .row.popIn.on{
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Fallback if backdrop-filter unsupported */
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .tile{
+        background: rgba(160, 170, 185, 0.18);
+      }
+    }
+  </style>
 </head>
-<body>
 
-    <div class="grid-container">
-        <button class="box" id="box1" autofocus></button>
-        <button class="box" id="box2"></button>
-        <button class="box" id="box3"></button>
-        <button class="box" id="box4"></button>
-        <button class="box" id="box5"></button>
-        <button class="box" id="box6"></button>
-        <button class="box" id="box7"></button>
-        <button class="box" id="box8"></button>
-        <button class="box" id="box9"></button>
+<body>
+  <div class="canvas">
+
+    <!-- Slide 0: Live Track -->
+    <div id="slideTrack" class="slide active">
+      <div id="tileTrack" class="tile is-selected" tabindex="0" role="button" aria-label="Live track tile">
+        <div class="content">
+          <div class="iconWrap">
+            <div id="iconTrack" class="iconSwap" aria-hidden="true"></div>
+          </div>
+
+          <h1 id="titleTrack" class="title">Live Track</h1>
+          <p id="subtitleTrack" class="subtitle">No crossing until session complete</p>
+          <p id="line3Track" class="line3">17 minutes remaining</p>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Force initial matrix focus right at boot
-        window.addEventListener('load', () => {
-            document.getElementById('box1').focus();
-        });
+    <!-- Slide 1: Navigation – Grandstand B -->
+    <div id="slideNav" class="slide">
+      <div id="tileNav" class="tile is-selected" tabindex="0" role="button" aria-label="Navigation tile">
+        <div class="content">
+          <div class="iconWrap">
+            <div class="arrowStage" aria-hidden="true">
+              <div id="iconNav" class="iconSwap arrow3d"></div>
+            </div>
+          </div>
 
-        // Map instant flash feedback handles to all 9 matrix points
-        document.querySelectorAll('.box').forEach(box => {
-            const flashAction = () => {
-                box.classList.add('clicked-flash');
-                setTimeout(() => box.classList.remove('clicked-flash'), 150);
-            };
+          <h1 id="titleNav" class="title">Grandstand B</h1>
+          <p id="subtitleNav" class="subtitle">Turn right in <span id="distLabel">10</span>m</p>
+          <p id="line3Nav" class="line3">Follow the route</p>
+        </div>
+      </div>
+    </div>
 
-            box.addEventListener('click', flashAction);
+    <!-- Slide 2: Leclerc position tracker -->
+    <div id="slideLEC" class="slide">
+      <div id="tileLEC" class="tile is-selected" tabindex="0" role="button" aria-label="Leclerc position tracker tile">
+        <div class="posCard">
+          <div style="display:grid; justify-items:center;">
+            <div id="lecHeader" class="posHeader">LEC P4</div>
+            <div id="battleTag" class="battleTag"></div>
+          </div>
+
+          <div class="rows">
+            <!-- Top row -->
+            <div id="rowTop" class="row">
+              <div class="arrowIcon" id="topArrow"></div>
+              <div class="nameGap">
+                <div id="topDrv" class="drv">HAM</div>
+                <div id="topGap" class="gap">+3.2s</div>
+              </div>
+            </div>
+
+            <!-- Bottom row -->
+            <div id="rowBot" class="row">
+              <div class="arrowIcon" id="botArrow"></div>
+              <div class="nameGap">
+                <div id="botDrv" class="drv">VER</div>
+                <div id="botGap" class="gap">-0.42s</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hudHint">← / → navigate • Enter / click activate</div>
+  </div>
+
+  <script>
+    /* =========================================================
+       ICONS (inline SVG)
+       ========================================================= */
+    function getCSS(varName) {
+      return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    }
+
+    function warningIconSVG() {
+      const s = getCSS("--icon-svg") || "140px";
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <path d="M60 12 L110 102 H10 Z"
+                fill="none"
+                stroke="${getCSS("--warn")}"
+                stroke-width="8"
+                stroke-linejoin="round"/>
+          <line x1="60" y1="42" x2="60" y2="72"
+                stroke="${getCSS("--text")}"
+                stroke-width="10"
+                stroke-linecap="round"/>
+          <circle cx="60" cy="88" r="6"
+                  fill="${getCSS("--text")}"/>
+        </svg>
+      `;
+    }
+
+    function tickIconSVG() {
+      const s = getCSS("--icon-svg") || "140px";
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="46"
+                  fill="none"
+                  stroke="${getCSS("--ok")}"
+                  stroke-width="8"/>
+          <path d="M38 62 L54 78 L84 44"
+                fill="none"
+                stroke="${getCSS("--ok")}"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-linejoin="round"/>
+        </svg>
+      `;
+    }
+
+    function navArrowSVG() {
+      const s = getCSS("--icon-svg") || "140px";
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <path d="M60 18 L92 52 H74 V102 H46 V52 H28 Z"
+                fill="none"
+                stroke="${getCSS("--nav")}"
+                stroke-linejoin="round"
+                stroke-linecap="round"/>
+        </svg>
+      `;
+    }
+
+    function upArrowRedSVG() {
+      return `
+        <svg width="100%" height="100%" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 6 L54 28 H40 V58 H24 V28 H10 Z" fill="#e11d1d"/>
+        </svg>
+      `;
+    }
+
+    function downArrowGreenSVG() {
+      return `
+        <svg width="100%" height="100%" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 58 L10 36 H24 V6 H40 V36 H54 Z" fill="#2ea043"/>
+        </svg>
+      `;
+    }
+
+    /* =========================================================
+       SLIDES NAVIGATION
+       ========================================================= */
+    const slides = [
+      { id: "slideTrack", tileId: "tileTrack", activate: activateTrack },
+      { id: "slideNav",   tileId: "tileNav",   activate: activateNav },
+      { id: "slideLEC",   tileId: "tileLEC",   activate: activateLEC }
+    ];
+    let slideIndex = 0;
+
+    function showSlide(i) {
+      slideIndex = (i + slides.length) % slides.length;
+      slides.forEach((s, idx) => {
+        document.getElementById(s.id).classList.toggle("active", idx === slideIndex);
+      });
+      document.getElementById(slides[slideIndex].tileId).focus();
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") showSlide(slideIndex + 1);
+      if (e.key === "ArrowLeft") showSlide(slideIndex - 1);
+      if (e.key === "Enter") slides[slideIndex].activate();
+    });
+
+    /* =========================================================
+       Slide 0: Live Track
+       ========================================================= */
+    const tileTrack = document.getElementById("tileTrack");
+    const iconTrack = document.getElementById("iconTrack");
+    const titleTrack = document.getElementById("titleTrack");
+    const subtitleTrack = document.getElementById("subtitleTrack");
+    const line3Track = document.getElementById("line3Track");
+
+    const TRACK_START_MINUTES = 17;
+    const TRACK_DEMO_SECONDS = 4.0;
+    const TRACK_TICK_RATE = 30;
+    let trackRunning = false;
+    let trackComplete = false;
+
+    function renderTrackStart() {
+      trackRunning = false;
+      trackComplete = false;
+      tileTrack.classList.remove("is-complete");
+
+      iconTrack.innerHTML = warningIconSVG();
+      titleTrack.textContent = "Live Track";
+      subtitleTrack.textContent = "No crossing until session complete";
+      line3Track.textContent = `${TRACK_START_MINUTES} minutes remaining`;
+    }
+
+    function renderTrackComplete() {
+      trackComplete = true;
+      trackRunning = false;
+
+      iconTrack.classList.add("fadeOut");
+      setTimeout(() => {
+        iconTrack.innerHTML = tickIconSVG();
+        iconTrack.classList.remove("fadeOut");
+
+        titleTrack.textContent = "Racing Complete";
+        subtitleTrack.textContent = "Crossing track now permitted";
+        line3Track.textContent = "";
+
+        tileTrack.classList.add("is-complete");
+      }, 260);
+    }
+
+    function runTrackCountdown() {
+      trackRunning = true;
+      const startMs = performance.now();
+      const durationMs = TRACK_DEMO_SECONDS * 1000;
+      const startValue = TRACK_START_MINUTES * 60;
+      const intervalMs = 1000 / TRACK_TICK_RATE;
+
+      const interval = setInterval(() => {
+        const t = Math.min(1, (performance.now() - startMs) / durationMs);
+        const eased = easeOutCubic(t);
+
+        const remaining = Math.round(lerp(startValue, 0, eased));
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+
+        if (remaining >= 60) line3Track.textContent = `${mins} minutes remaining`;
+        else line3Track.textContent = `${mins}:${String(secs).padStart(2,"0")} remaining`;
+
+        if (t >= 1) {
+          clearInterval(interval);
+          renderTrackComplete();
+        }
+      }, intervalMs);
+    }
+
+    function activateTrack() {
+      if (trackRunning) return;
+
+      tileTrack.classList.add("is-clicked");
+      setTimeout(() => tileTrack.classList.remove("is-clicked"), 240);
+
+      if (trackComplete) {
+        renderTrackStart();
+        return;
+      }
+      runTrackCountdown();
+    }
+
+    tileTrack.addEventListener("click", activateTrack);
+    tileTrack.addEventListener("focus", () => tileTrack.classList.add("is-selected"));
+    tileTrack.addEventListener("blur",  () => tileTrack.classList.remove("is-selected"));
+
+    /* =========================================================
+       Slide 1: Navigation – Grandstand B
+       ========================================================= */
+    const tileNav = document.getElementById("tileNav");
+    const iconNav = document.getElementById("iconNav");
+    const subtitleNav = document.getElementById("subtitleNav");
+    const line3Nav = document.getElementById("line3Nav");
+    const titleNav = document.getElementById("titleNav");
+
+    const NAV_START_DIST = 10;
+    const NAV_APPROACH_SECONDS = 5.0;
+    const NAV_TURN_HOLD_MS = 650;
+    const NAV_ARRIVE_FADE_MS = 260;
+
+    let navRunning = false;
+    let navComplete = false;
+    let navPhase = "idle";
+    let navPhaseStart = 0;
+
+    function setArrowPose({ tiltX, rotZ, scale, strength }) {
+      iconNav.style.setProperty("--tiltX", `${tiltX}deg`);
+      iconNav.style.setProperty("--rotZ", `${rotZ}deg`);
+      iconNav.style.setProperty("--scale", `${scale}`);
+      iconNav.style.setProperty("--strength", `${strength}`);
+    }
+
+    function renderNavStart() {
+      navRunning = false;
+      navComplete = false;
+      navPhase = "idle";
+      tileNav.classList.remove("is-complete");
+
+      iconNav.classList.remove("tickIcon");
+      iconNav.classList.add("arrow3d");
+      iconNav.innerHTML = navArrowSVG();
+      iconNav.classList.remove("fadeOut");
+
+      titleNav.textContent = "Grandstand B";
+      subtitleNav.innerHTML = `Turn right in <span id="distLabel">${NAV_START_DIST}</span>m`;
+      line3Nav.textContent = "Follow the route";
+
+      setArrowPose({ tiltX: 55, rotZ: 0, scale: 0.95, strength: 0.25 });
+    }
+
+    function setTurnRightNow() {
+      subtitleNav.textContent = "Turn right";
+      line3Nav.textContent = "";
+      setArrowPose({ tiltX: 10, rotZ: 90, scale: 1.18, strength: 1.0 });
+    }
+
+    function renderNavArrived() {
+      iconNav.classList.add("fadeOut");
+      setTimeout(() => {
+        iconNav.innerHTML = tickIconSVG();
+        iconNav.classList.remove("arrow3d");
+        iconNav.classList.add("tickIcon");
+        iconNav.classList.remove("fadeOut");
+
+        titleNav.textContent = "Grandstand B";
+        subtitleNav.textContent = "Arrived";
+        line3Nav.textContent = "Row D Seat 46";
+
+        tileNav.classList.add("is-complete");
+        navRunning = false;
+        navComplete = true;
+      }, NAV_ARRIVE_FADE_MS);
+    }
+
+    function activateNav() {
+      tileNav.classList.add("is-clicked");
+      setTimeout(() => tileNav.classList.remove("is-clicked"), 240);
+
+      if (navComplete) {
+        renderNavStart();
+        return;
+      }
+      if (navRunning) return;
+
+      navRunning = true;
+      navPhase = "approach";
+      navPhaseStart = performance.now();
+      requestAnimationFrame(navTick);
+    }
+
+    function navTick(now) {
+      if (!navRunning) return;
+
+      if (navPhase === "approach") {
+        const t = clamp01((now - navPhaseStart) / (NAV_APPROACH_SECONDS * 1000));
+        const eased = easeInOutCubic(t);
+
+        const dist = lerp(NAV_START_DIST, 0, eased);
+        const rounded = Math.max(0, Math.round(dist));
+        subtitleNav.innerHTML = `Turn right in <span id="distLabel">${rounded}</span>m`;
+        line3Nav.textContent = "Follow the route";
+
+        const tiltX = lerp(55, 10, eased);
+        const rotZ  = lerp(0, 90, eased);
+        const scale = lerp(0.95, 1.18, eased);
+        const strength = lerp(0.25, 1.0, eased);
+        setArrowPose({ tiltX, rotZ, scale, strength });
+
+        if (t >= 1) {
+          navPhase = "turnHold";
+          navPhaseStart = now;
+          setTurnRightNow();
+        }
+      } else if (navPhase === "turnHold") {
+        if ((now - navPhaseStart) >= NAV_TURN_HOLD_MS) {
+          navPhase = "arrive";
+          renderNavArrived();
+          return;
+        }
+      }
+
+      requestAnimationFrame(navTick);
+    }
+
+    tileNav.addEventListener("click", activateNav);
+    tileNav.addEventListener("focus", () => tileNav.classList.add("is-selected"));
+    tileNav.addEventListener("blur",  () => tileNav.classList.remove("is-selected"));
+
+    /* =========================================================
+       Slide 2: Leclerc position tracker
+       - BATTLE replaces HAM time for 2 seconds
+       - VER continues stepping during BATTLE
+       - After switch, keep live ticks for a few seconds
+       ========================================================= */
+    const tileLEC = document.getElementById("tileLEC");
+    const lecHeader = document.getElementById("lecHeader");
+
+    const rowTop = document.getElementById("rowTop");
+    const rowBot = document.getElementById("rowBot");
+
+    const topArrow = document.getElementById("topArrow");
+    const botArrow = document.getElementById("botArrow");
+
+    const topDrv = document.getElementById("topDrv");
+    const botDrv = document.getElementById("botDrv");
+    const topGap = document.getElementById("topGap");
+    const botGap = document.getElementById("botGap");
+
+    let lecRunning = false;
+    let lecComplete = false;
+    let lecInterval = null;
+    let lecTimeouts = [];
+
+    // Phase A (5 seconds, 1s jumps) – includes start frame at index 0
+    const hamApproach = ["+3.2s", "+2.6s", "+2.0s", "+1.3s", "+0.8s", "+0.30s"];
+    const verApproach = ["-0.42s", "-0.80s", "-1.20s", "-1.60s", "-2.00s", "-2.00s"];
+
+    // Phase B (2 seconds) – VER continues increasing while HAM shows BATTLE
+    const verBattle = ["-2.15s", "-2.30s"];
+
+    // Phase D (post-switch, "still live" for a few seconds) — 1s jumps
+    const norLive = ["+8.77s", "+8.59s", "+8.41s", "+8.23s"];
+    const hamLive = ["-0.30s", "-0.28s", "-0.26s", "-0.25s"];
+
+    function clearLECTimers() {
+      if (lecInterval) clearInterval(lecInterval);
+      lecInterval = null;
+      lecTimeouts.forEach(t => clearTimeout(t));
+      lecTimeouts = [];
+    }
+
+    function renderLECStart() {
+      lecRunning = false;
+      lecComplete = false;
+      clearLECTimers();
+
+      tileLEC.classList.remove("is-complete");
+      lecHeader.textContent = "LEC P4";
+
+      topArrow.innerHTML = upArrowRedSVG();
+      botArrow.innerHTML = downArrowGreenSVG();
+
+      topDrv.textContent = "HAM";
+      topGap.textContent = hamApproach[0];
+      topGap.classList.remove("battle");
+
+      botDrv.textContent = "VER";
+      botGap.textContent = verApproach[0];
+      botGap.classList.remove("battle");
+
+      rowTop.classList.remove("fadeOut", "popIn", "on");
+      rowBot.classList.remove("fadeOut", "popIn", "on");
+    }
+
+    function runLECSequence() {
+      lecRunning = true;
+
+      let step = 0;
+      lecInterval = setInterval(() => {
+        step += 1;
+
+        topGap.textContent = hamApproach[Math.min(step, 5)];
+        botGap.textContent = verApproach[Math.min(step, 5)];
+
+        if (step >= 5) {
+          clearInterval(lecInterval);
+          lecInterval = null;
+          enterBattlePhase();
+        }
+      }, 1000);
+    }
+
+    function enterBattlePhase() {
+      topGap.textContent = "BATTLE";
+      topGap.classList.add("battle");
+
+      let b = 0;
+      lecInterval = setInterval(() => {
+        botGap.textContent = verBattle[Math.min(b, verBattle.length - 1)];
+        b += 1;
+
+        if (b >= verBattle.length) {
+          clearInterval(lecInterval);
+          lecInterval = null;
+          transitionLECFinal();
+        }
+      }, 1000);
+    }
+
+    function runFinalLiveTicks() {
+      // Start from index 0 (already displayed), then tick forward once per second
+      let i = 0;
+
+      if (lecInterval) clearInterval(lecInterval);
+      lecInterval = setInterval(() => {
+        i += 1;
+        topGap.textContent = norLive[Math.min(i, norLive.length - 1)];
+        botGap.textContent = hamLive[Math.min(i, hamLive.length - 1)];
+
+        if (i >= norLive.length - 1) {
+          clearInterval(lecInterval);
+          lecInterval = null;
+        }
+      }, 1000);
+    }
+
+    function transitionLECFinal() {
+      rowTop.classList.add("fadeOut");
+      rowBot.classList.add("fadeOut");
+
+      lecTimeouts.push(setTimeout(() => {
+        // Final state
+        lecHeader.textContent = "LEC P3";
+        topGap.classList.remove("battle");
+
+        // Top: NOR +8.77s
+        topArrow.innerHTML = upArrowRedSVG();
+        topDrv.textContent = "NOR";
+        topGap.textContent = norLive[0];
+
+        // Bottom: HAM -0.30s
+        botArrow.innerHTML = downArrowGreenSVG();
+        botDrv.textContent = "HAM";
+        botGap.textContent = hamLive[0];
+
+        // Pop-in
+        rowTop.classList.remove("fadeOut");
+        rowBot.classList.remove("fadeOut");
+        rowTop.classList.add("popIn");
+        rowBot.classList.add("popIn");
+
+        // Mark complete (ONCE)
+        tileLEC.classList.add("is-complete");
+        lecRunning = false;
+        lecComplete = true;
+
+        // Start pop-in, then start live ticks shortly after
+        requestAnimationFrame(() => {
+          rowTop.classList.add("on");
+          rowBot.classList.add("on");
+          setTimeout(runFinalLiveTicks, 200);
         });
-    </script>
+      }, 260));
+    }
+
+    function activateLEC() {
+      tileLEC.classList.add("is-clicked");
+      setTimeout(() => tileLEC.classList.remove("is-clicked"), 240);
+
+      if (lecRunning) return;
+
+      if (lecComplete) {
+        renderLECStart();
+        return;
+      }
+
+      runLECSequence();
+    }
+
+    tileLEC.addEventListener("click", activateLEC);
+    tileLEC.addEventListener("focus", () => tileLEC.classList.add("is-selected"));
+    tileLEC.addEventListener("blur",  () => tileLEC.classList.remove("is-selected"));
+
+    /* =========================================================
+       Helpers
+       ========================================================= */
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function clamp01(x) { return Math.max(0, Math.min(1, x)); }
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+    }
+
+    /* =========================================================
+       Init
+       ========================================================= */
+    iconTrack.innerHTML = warningIconSVG();
+    renderTrackStart();
+
+    iconNav.innerHTML = navArrowSVG();
+    renderNavStart();
+
+    renderLECStart();
+
+    document.getElementById(slides[0].tileId).focus();
+  </script>
 </body>
 </html>
