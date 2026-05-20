@@ -26,7 +26,7 @@
     }
 
     :root {
-      --bg: #0b0f16;
+      --bg: transparent; /* ✅ no global backdrop */
 
       /* Liquid Glass tile */
       --tile-bg: rgba(180, 190, 205, 0.12);          /* subtle grey presence */
@@ -59,8 +59,10 @@
 
     body{
       margin:0;
-      background: radial-gradient(900px 600px at 50% 25%, rgba(80,120,255,0.18), transparent 60%),
-                  var(--bg);
+
+      /* ✅ REMOVE global backdrop / gradients */
+      background: transparent;
+
       display:grid;
       place-items:center;
       font-family: "Formula1 Display", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -73,17 +75,27 @@
       height:600px;
       border-radius:26px;
       overflow:hidden;
-      box-shadow: 0 30px 120px rgba(0,0,0,0.55);
+
+      /* ✅ REMOVE canvas shadow/frame so it doesn’t look like a “panel” */
+      box-shadow: none;
+
       display:grid;
       place-items:center;
       position:relative;
 
-      /* Give the glass something to blur */
+      /* ✅ REMOVE canvas backdrop blobs */
+      background: transparent;
+
+      /* Optional: if you want to SEE frosting in browser,
+         temporarily uncomment the below to provide something to blur.
+         On real glasses, the real world provides this naturally. */
+      /*
       background:
         radial-gradient(900px 700px at 50% 20%, rgba(120,170,255,0.18), transparent 65%),
         radial-gradient(700px 600px at 30% 80%, rgba(255,255,255,0.06), transparent 60%),
         radial-gradient(800px 600px at 70% 70%, rgba(80,255,170,0.06), transparent 65%),
         transparent;
+      */
     }
 
     /* Slide container */
@@ -334,7 +346,7 @@
       justify-items:center;
       align-items:start;
 
-      padding-top: 22px;   /* lowered slightly */
+      padding-top: 22px;
       gap: 10px;
     }
 
@@ -357,17 +369,13 @@
       gap: 36px;
     }
 
-    /* Fixed 2-column grid keeps arrow locked when text changes */
     .row{
       width: 100%;
       display: grid;
-
-      /* tighter columns => less gap */
       grid-template-columns: 88px 200px;
       justify-content: center;
       align-items: center;
       column-gap: 2px;
-
       transition: transform 260ms ease, opacity 260ms ease;
     }
 
@@ -376,14 +384,12 @@
       height: 112px;
       display:grid;
       place-items:center;
-
-      justify-self: end;          /* hug text */
-      transform: translateX(6px); /* micro-nudge closer */
+      justify-self: end;
+      transform: translateX(6px);
     }
 
-    /* Text block: fixed width (stable) but LEFT-aligned (closer visually) */
     .nameGap{
-      width: 200px;               /* must match 2nd column */
+      width: 200px;
       display: grid;
       justify-items: start;
       text-align: left;
@@ -404,16 +410,15 @@
       letter-spacing: -0.02em;
       color: var(--muted2);
       line-height: 1.0;
-      min-height: 42px; /* stable when swapping to BATTLE */
+      min-height: 42px;
     }
 
-    /* BATTLE: Regular, same size as timing text (no extra tracking) */
     .gap.battle{
       font-weight: 400;
       font-size: 42px;
       letter-spacing: -0.02em;
       color: var(--muted2);
-      text-transform: none; /* keep exactly as inserted (we insert "BATTLE") */
+      text-transform: none;
     }
 
     .row.fadeOut{
@@ -815,9 +820,6 @@
 
     /* =========================================================
        Slide 2: Leclerc position tracker
-       - BATTLE replaces HAM time for 2 seconds
-       - VER continues stepping during BATTLE
-       - After switch, keep live ticks for a few seconds
        ========================================================= */
     const tileLEC = document.getElementById("tileLEC");
     const lecHeader = document.getElementById("lecHeader");
@@ -838,14 +840,9 @@
     let lecInterval = null;
     let lecTimeouts = [];
 
-    // Phase A (5 seconds, 1s jumps) – includes start frame at index 0
     const hamApproach = ["+3.2s", "+2.6s", "+2.0s", "+1.3s", "+0.8s", "+0.30s"];
     const verApproach = ["-0.42s", "-0.80s", "-1.20s", "-1.60s", "-2.00s", "-2.00s"];
-
-    // Phase B (2 seconds) – VER continues increasing while HAM shows BATTLE
     const verBattle = ["-2.15s", "-2.30s"];
-
-    // Phase D (post-switch, "still live" for a few seconds) — 1s jumps
     const norLive = ["+8.77s", "+8.59s", "+8.41s", "+8.23s"];
     const hamLive = ["-0.30s", "-0.28s", "-0.26s", "-0.25s"];
 
@@ -915,10 +912,9 @@
     }
 
     function runFinalLiveTicks() {
-      // Start from index 0 (already displayed), then tick forward once per second
       let i = 0;
-
       if (lecInterval) clearInterval(lecInterval);
+
       lecInterval = setInterval(() => {
         i += 1;
         topGap.textContent = norLive[Math.min(i, norLive.length - 1)];
@@ -936,32 +932,26 @@
       rowBot.classList.add("fadeOut");
 
       lecTimeouts.push(setTimeout(() => {
-        // Final state
         lecHeader.textContent = "LEC P3";
         topGap.classList.remove("battle");
 
-        // Top: NOR +8.77s
         topArrow.innerHTML = upArrowRedSVG();
         topDrv.textContent = "NOR";
         topGap.textContent = norLive[0];
 
-        // Bottom: HAM -0.30s
         botArrow.innerHTML = downArrowGreenSVG();
         botDrv.textContent = "HAM";
         botGap.textContent = hamLive[0];
 
-        // Pop-in
         rowTop.classList.remove("fadeOut");
         rowBot.classList.remove("fadeOut");
         rowTop.classList.add("popIn");
         rowBot.classList.add("popIn");
 
-        // Mark complete (ONCE)
         tileLEC.classList.add("is-complete");
         lecRunning = false;
         lecComplete = true;
 
-        // Start pop-in, then start live ticks shortly after
         requestAnimationFrame(() => {
           rowTop.classList.add("on");
           rowBot.classList.add("on");
@@ -989,7 +979,7 @@
     tileLEC.addEventListener("blur",  () => tileLEC.classList.remove("is-selected"));
 
     /* =========================================================
-       Helpers
+       Helpers + Init
        ========================================================= */
     function lerp(a, b, t) { return a + (b - a) * t; }
     function clamp01(x) { return Math.max(0, Math.min(1, x)); }
@@ -998,9 +988,6 @@
       return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
     }
 
-    /* =========================================================
-       Init
-       ========================================================= */
     iconTrack.innerHTML = warningIconSVG();
     renderTrackStart();
 
@@ -1008,7 +995,6 @@
     renderNavStart();
 
     renderLECStart();
-
     document.getElementById(slides[0].tileId).focus();
   </script>
 </body>
